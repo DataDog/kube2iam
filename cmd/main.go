@@ -70,7 +70,7 @@ func main() {
 	}
 
 	if config.AddIPTablesRule {
-		if err := iptables.ClearRules(); err != nil {
+		if err := iptables.ClearRules(config.MetadataAddress, config.HostInterface); err != nil {
 			log.Fatalf("%s", err)
 		}
 
@@ -78,7 +78,7 @@ func main() {
 			log.Fatalf("%s", err)
 		}
 		defer func() {
-			err = iptables.ClearChain()
+			err = iptables.ClearChain(config.MetadataAddress, config.HostInterface)
 			if err != nil {
 				log.WithError(err).Errorf("failed to clean iptables chain")
 			}
