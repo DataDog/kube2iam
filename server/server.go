@@ -139,13 +139,12 @@ func parseRemoteAddr(addr string) string {
 
 // NewServer will create a new Server with default values.
 func NewServer(config *Config) (error, *Server) {
-	k, err := k8s.NewClient(config.APIServer, config.APIToken, config.APIToken, config.Insecure)
+	k, err := k8s.NewClient(config.APIServer, config.APIToken, config.NodeName, config.Insecure)
 	if err != nil {
 		return err, nil
 	}
 
 	iamClient := iam.NewClient(config.BaseRoleARN, config.UseRegionalStsEndpoint)
-	log.Debugln("Caches have been synced.  Proceeding with server.")
 	roleMapper := mappings.NewRoleMapper(config.IAMRoleKey, config.DefaultIAMRole, config.NamespaceRestriction, config.NamespaceKey, iamClient, k, config.NamespaceRestrictionFormat)
 
 	if config.BaseRoleARN != "" {
@@ -387,13 +386,14 @@ func (s *Server) Init() error {
 
 	synced := false
 	for i := 0; i < defaultCacheSyncAttempts && !synced; i++ {
+		log.WithField("attempt", i).Debugln("syncing k8s cache.")
 		synced = cache.WaitForCacheSync(nil, podSynched, namespaceSynched)
 	}
 
 	if !synced {
 		return fmt.Errorf("attempted to wait for caches to be synced for %d however it is not done.  Giving up.", defaultCacheSyncAttempts)
 	}
-	log.Debugln("Caches have been synced.  Proceeding with server.")
+	log.Debugln("k8s caches have been synced.  Proceeding with server.")
 
 	// Begin healthchecking
 	s.beginPollHealthcheck(healthcheckInterval)
