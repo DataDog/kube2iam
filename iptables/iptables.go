@@ -46,8 +46,8 @@ func ClearChain(metadataAddress, hostInterface string) error {
 	return ipt.DeleteChain("nat", kube2iamIptableChain)
 }
 
-// AddRule adds the required rule to the host's nat table.
-func AddRule(appPort int, metadataAddress, hostInterface, bindIP string) error {
+// AddRules adds the required rule to the host's nat table.
+func AddRules(appPort int, metadataAddress, hostInterface, bindIP string) error {
 	dstAddr := fmt.Sprintf("%s:%d", bindIP, appPort)
 	if err := checkInterfaceExists(hostInterface); err != nil {
 		return err

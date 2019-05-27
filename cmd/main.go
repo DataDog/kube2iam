@@ -29,7 +29,8 @@ func addFlags(s *server.Config, fs *pflag.FlagSet) {
 	fs.DurationVar(&s.IAMRoleSessionTTL, "iam-role-session-ttl", server.DefaultIAMRoleSessionTTL, "TTL for the assume role session")
 	fs.BoolVar(&s.Insecure, "insecure", false, "Kubernetes server should be accessed without verifying the TLS. Testing only")
 	fs.StringVar(&s.MetadataAddress, "metadata-addr", server.DefaultMetadataAddress, "Address for the ec2 metadata")
-	fs.BoolVar(&s.AddIPTablesRule, "iptables", false, "Add iptables rule (also requires --bind-ip)")
+	fs.BoolVar(&s.AddIPTablesRules, "iptables", false, "Add iptables rule (also requires --bind-ip)")
+	fs.BoolVar(&s.KeepIPTablesRules, "keep-iptables", true, "Keep iptables rules on stop (also requires --iptables)")
 	fs.BoolVar(&s.AutoDiscoverBaseArn, "auto-discover-base-arn", false, "Queries EC2 Metadata to determine the base ARN")
 	fs.BoolVar(&s.AutoDiscoverDefaultRole, "auto-discover-default-role", false, "Queries EC2 Metadata to determine the default Iam Role and base ARN, cannot be used with --default-role, overwrites any previous setting for --base-role-arn")
 	fs.StringVar(&s.HostInterface, "host-interface", "docker0", "Host interface for proxying AWS metadata")
@@ -69,14 +70,16 @@ func main() {
 		log.WithError(err).Fatal("failed to validate config")
 	}
 
-	if config.AddIPTablesRule {
+	if config.AddIPTablesRules {
 		if err := iptables.ClearRules(config.MetadataAddress, config.HostInterface); err != nil {
 			log.Fatalf("%s", err)
 		}
 
-		if err := iptables.AddRule(config.AppPort, config.MetadataAddress, config.HostInterface, config.BindIP); err != nil {
+		if err := iptables.AddRules(config.AppPort, config.MetadataAddress, config.HostInterface, config.BindIP); err != nil {
 			log.Fatalf("%s", err)
 		}
+	}
+	if config.AddIPTablesRules && !config.KeepIPTablesRules {
 		defer func() {
 			err = iptables.ClearChain(config.MetadataAddress, config.HostInterface)
 			if err != nil {
