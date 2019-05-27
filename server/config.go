@@ -27,7 +27,8 @@ type Config struct {
 	LogLevel                   string
 	LogFormat                  string
 	Insecure                   bool
-	AddIPTablesRule            bool
+	AddIPTablesRules           bool
+	KeepIPTablesRules          bool
 	AutoDiscoverBaseArn        bool
 	AutoDiscoverDefaultRole    bool
 	NamespaceRestriction       bool
